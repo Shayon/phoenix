@@ -29,7 +29,7 @@ defmodule Phoenix.Router.RoutingTest do
     get "/backups/*path", UserController, :image
     get "/static/images/icons/*image", UserController, :image
 
-    trace("/trace", UserController, :trace)
+    trace "/trace", UserController, :trace
     options "/options", UserController, :options
     connect "/connect", UserController, :connect
     match :move, "/move", UserController, :move
@@ -172,7 +172,6 @@ defmodule Phoenix.Router.RoutingTest do
               helper: "user",
               host: nil,
               kind: :match,
-              line: 39,
               opts: :not_found,
               path: "/*path",
               pipe_through: [],
@@ -188,7 +187,6 @@ defmodule Phoenix.Router.RoutingTest do
               helper: "users",
               host: nil,
               kind: :match,
-              line: 24,
               opts: :show,
               path: "/users/:id",
               pipe_through: [],
@@ -202,7 +200,6 @@ defmodule Phoenix.Router.RoutingTest do
               helper: "users",
               host: nil,
               kind: :match,
-              line: 22,
               opts: :index,
               path: "/",
               pipe_through: [],
