@@ -29,7 +29,7 @@ defmodule Phoenix.Router.RoutingTest do
     get "/backups/*path", UserController, :image
     get "/static/images/icons/*image", UserController, :image
 
-    trace "/trace", UserController, :trace
+    trace("/trace", UserController, :trace)
     options "/options", UserController, :options
     connect "/connect", UserController, :connect
     match :move, "/move", UserController, :move
@@ -164,5 +164,53 @@ defmodule Phoenix.Router.RoutingTest do
     assert conn.method == "PUT"
     assert conn.status == 200
     assert conn.resp_body == "users any"
+  end
+
+  test "route_info returns route string and path params" do
+    assert {%Phoenix.Router.Route{
+              assigns: %{},
+              helper: "user",
+              host: nil,
+              kind: :match,
+              line: 39,
+              opts: :not_found,
+              path: "/*path",
+              pipe_through: [],
+              plug: Phoenix.Router.RoutingTest.UserController,
+              private: %{},
+              verb: :get
+            },
+            %{"path" => ["foo", "bar", "baz"]}} =
+             Phoenix.Router.route_info(Router, "GET", "foo/bar/baz", nil)
+
+    assert {%Phoenix.Router.Route{
+              assigns: %{},
+              helper: "users",
+              host: nil,
+              kind: :match,
+              line: 24,
+              opts: :show,
+              path: "/users/:id",
+              pipe_through: [],
+              plug: Phoenix.Router.RoutingTest.UserController,
+              private: %{},
+              verb: :get
+            }, %{"id" => "1"}} = Phoenix.Router.route_info(Router, "GET", "users/1", nil)
+
+    assert {%Phoenix.Router.Route{
+              assigns: %{},
+              helper: "users",
+              host: nil,
+              kind: :match,
+              line: 22,
+              opts: :index,
+              path: "/",
+              pipe_through: [],
+              plug: Phoenix.Router.RoutingTest.UserController,
+              private: %{},
+              verb: :get
+            }, %{}} = Phoenix.Router.route_info(Router, "GET", "/", "host")
+
+    assert Phoenix.Router.route_info(Router, "POST", "/not-exists", "host") == :error
   end
 end

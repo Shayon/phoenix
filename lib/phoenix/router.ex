@@ -266,7 +266,7 @@ defmodule Phoenix.Router do
   def __call__(%{private: %{phoenix_bypass: :all}} = conn, _match) do
     conn
   end
-  def __call__(conn, {path_params, prepare, pipeline, {plug, opts}}) do
+  def __call__(conn, {_route, path_params, prepare, pipeline, {plug, opts}}) do
     case conn |> prepare.(path_params) |> pipeline.() do
       %Plug.Conn{halted: true} = halted_conn ->
         halted_conn
@@ -389,7 +389,8 @@ defmodule Phoenix.Router do
 
         @doc false
         def __match_route__(unquote(verb_match), unquote(path), unquote(host)) do
-          {unquote(path_params),
+          {unquote(Macro.escape(route)),
+           unquote(path_params),
            fn var!(conn, :conn), var!(path_params, :conn) -> unquote(prepare) end,
            &unquote(Macro.var(pipe_name, __MODULE__))/1,
            unquote(dispatch)}
@@ -809,6 +810,38 @@ defmodule Phoenix.Router do
     quote unquote: true, bind_quoted: [path: path, plug: plug] do
       plug = Scope.register_forwards(__MODULE__, path, plug)
       unquote(add_route(:forward, :*, path, plug, plug_opts, router_opts))
+    end
+  end
+
+  @doc """
+  Returns the compile-time route info and runtime path params for a request.
+
+  A tuple is returned containing matching `%Phoenix.Router.Route{}` struct and
+  the path params that matched the request path.
+
+  ## Examples
+
+      iex> Phoenix.Router.route_info(MyRouter, "GET", "/posts/123", "myhost")
+      {%Phoenix.Router.Route{
+         assigns: %{},
+         helper: "post",
+         host: nil,
+         kind: :match,
+         opts: :show,
+         path: "/posts/:id",
+         pipe_through: [:browser],
+         plug: MyAppWeb.PostController,
+         verb: :get
+      }, %{"id" => "123"}}
+
+      iex> Phoenix.Router.route_info(MyRouter, "GET", "/not-exists", "myhost")
+      :error
+  """
+  def route_info(router, method, path, host) do
+    split_path = for segment <- String.split(path, "/"), segment != "", do: segment
+    case router.__match_route__(method, split_path, host) do
+      {%Route{} = route, path_params, _prepare, _pipes, _dispatch} -> {route, path_params}
+      :error -> :error
     end
   end
 end
